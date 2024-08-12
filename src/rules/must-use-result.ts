@@ -37,7 +37,7 @@ function isResultLike(
   node?: TSESTree.Node | null,
 ): boolean {
   if (!node) return false;
-  const tsNodeMap = parserServices.esTreeNodeToTSNodeMap!.get(node);
+  const tsNodeMap = parserServices.esTreeNodeToTSNodeMap.get(node);
   const type = checker.getTypeAtLocation(tsNodeMap);
 
   for (const ty of unionTypeParts(checker.getApparentType(type))) {
