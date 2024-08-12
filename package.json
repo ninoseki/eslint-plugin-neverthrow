@@ -1,0 +1,75 @@
+{
+    "name": "@ninoseki/eslint-plugin-neverthrow",
+    "version": "0.0.1",
+    "type": "module",
+    "main": "dist/index.cjs",
+    "files": [
+        "dist"
+    ],
+    "tsup": {
+        "format": [
+            "cjs"
+        ],
+        "entry": [
+            "src"
+        ],
+        "dts": true,
+        "clean": true
+    },
+    "scripts": {
+        "build": "tsup",
+        "format": "prettier --write src tests",
+        "lint": "eslint src tests --fix",
+        "test": "vitest",
+        "prepack": "npm run build",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.ts": [
+            "npm run lint",
+            "npm run format"
+        ]
+    },
+    "peerDependencies": {
+        "eslint": ">=9.0.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.9.0",
+        "@types/eslint": "^9.6.0",
+        "@types/eslint__js": "^8.42.3",
+        "@types/node": "^22.2.0",
+        "@typescript-eslint/parser": "^8.0.1",
+        "@typescript-eslint/rule-tester": "^8.0.1",
+        "@typescript-eslint/types": "^8.0.1",
+        "@typescript-eslint/utils": "^8.0.1",
+        "eslint": "^9.9.0",
+        "eslint-plugin-simple-import-sort": "^12.1.1",
+        "husky": "^9.1.4",
+        "lint-staged": "^15.2.8",
+        "neverthrow": "^7.0.0",
+        "prettier": "^3.3.3",
+        "rollup-plugin-dts": "^6.1.1",
+        "tsup": "^8.2.4",
+        "typescript": "^5.5.4",
+        "typescript-eslint": "^8.0.1",
+        "vitest": "^2.0.5"
+    },
+    "dependencies": {
+        "tsutils": "^3.21.0"
+    },
+    "keywords": [
+        "eslint",
+        "eslint-plugin",
+        "neverthrow"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ninoseki/eslint-plugin-neverthrow.git"
+    },
+    "author": "Manabu Niseki",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ninoseki/eslint-plugin-neverthrow/issues"
+    },
+    "homepage": "https://github.com/ninoseki/eslint-plugin-neverthrow"
+}
