@@ -86,11 +86,7 @@ function getAssignation(
   return getAssignation(checker, parserServices, node.parent)
 }
 
-function isReturned(
-  checker: TypeChecker,
-  parserServices: ParserServicesWithTypeInformation,
-  node: TSESTree.Node,
-): boolean {
+function isReturned(node: TSESTree.Node): boolean {
   if (node.type === 'ArrowFunctionExpression') {
     return true
   }
@@ -106,7 +102,7 @@ function isReturned(
   if (!node.parent) {
     return false
   }
-  return isReturned(checker, parserServices, node.parent)
+  return isReturned(node.parent)
 }
 
 const ignoreParents = [
@@ -137,7 +133,7 @@ function processSelector(
     return false
   }
   // return getResult()
-  if (isReturned(checker, parserServices, node)) {
+  if (isReturned(node)) {
     return false
   }
 

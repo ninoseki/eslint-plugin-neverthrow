@@ -1,6 +1,6 @@
 {
   "name": "@ninoseki/eslint-plugin-neverthrow",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "keywords": [
     "eslint",
     "eslint-plugin",
@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.0",
+    "@typescript-eslint/rule-tester": "^8.57.0",
     "@vitest/eslint-plugin": "^1.6.12",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
