@@ -1,3 +1,7 @@
-import { mustUseResult } from "./rules/must-use-result";
+import type { ESLint } from 'eslint'
 
-export const rules = { "must-use-result": mustUseResult };
+import { mustUseResult } from './rules/must-use-result'
+
+export const rules = { 'must-use-result': mustUseResult }
+
+export default { rules } as unknown as ESLint.Plugin

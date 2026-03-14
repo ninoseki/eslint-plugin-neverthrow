@@ -1,42 +1,39 @@
 # @ninoseki/eslint-plugin-neverthrow
 
-[eslint-plugin-neverthrow](https://github.com/mdbetancourt/eslint-plugin-neverthrow) but works with ESLint v9.
+[eslint-plugin-neverthrow](https://github.com/mdbetancourt/eslint-plugin-neverthrow) but works with ESLint v10.
 
 ## Installation
 
 ```bash
-npm install --save-dev @ninoseki/eslint-plugin-neverthrow @typescript-eslint/parser
+npm install --save-dev @ninoseki/eslint-plugin-neverthrow typescript-eslint
 ```
 
 ## Requirements
 
-- ESLint v9+
-- `@typescript-eslint/parser`
+- ESLint v10+
+- `typescript-eslint`
 
 ## Usage
 
 ```ts
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
-import neverthrow from "@ninoseki/eslint-plugin-neverthrow";
-import typescriptEslintParser from "@typescript-eslint/parser";
+import { defineConfig } from 'eslint/config'
+import tseslint from 'typescript-eslint'
+import neverthrow from '@ninoseki/eslint-plugin-neverthrow'
 
-export default tseslint.config(
-  eslint.configs.recommended,
+export default defineConfig(
   ...tseslint.configs.recommended,
   {
     plugins: { neverthrow },
     rules: {
-      "neverthrow/must-use-result": "error",
+      'neverthrow/must-use-result': 'error',
     },
     languageOptions: {
-      parser: typescriptEslintParser,
       parserOptions: {
-        project: "./tsconfig.json",
+        project: './tsconfig.json',
       },
     },
   },
-);
+)
 ```
 
 ## Rules
