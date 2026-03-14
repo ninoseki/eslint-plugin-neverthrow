@@ -2,22 +2,21 @@ name: Publish NPM package
 
 on:
   release:
-    types: ["created"]
+    types: ['created']
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for OIDC
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
-      - name: Install NPM dependencies
-        run: npm install
-      - name: Build NPM dependencies
-        run: npm run build
-      - uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
+      - run: npm install
+      - run: npm version --no-git-tag-version ${{ github.event.release.tag_name }}
+      - run: npm publish

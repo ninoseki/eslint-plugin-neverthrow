@@ -16,27 +16,23 @@ npm install --save-dev @ninoseki/eslint-plugin-neverthrow @typescript-eslint/par
 ## Usage
 
 ```ts
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
-import neverthrow from "@ninoseki/eslint-plugin-neverthrow";
-import typescriptEslintParser from "@typescript-eslint/parser";
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import neverthrow from '@ninoseki/eslint-plugin-neverthrow'
+import typescriptEslintParser from '@typescript-eslint/parser'
 
-export default tseslint.config(
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
-    plugins: { neverthrow },
-    rules: {
-      "neverthrow/must-use-result": "error",
-    },
-    languageOptions: {
-      parser: typescriptEslintParser,
-      parserOptions: {
-        project: "./tsconfig.json",
-      },
+export default tseslint.config(eslint.configs.recommended, ...tseslint.configs.recommended, {
+  plugins: { neverthrow },
+  rules: {
+    'neverthrow/must-use-result': 'error',
+  },
+  languageOptions: {
+    parser: typescriptEslintParser,
+    parserOptions: {
+      project: './tsconfig.json',
     },
   },
-);
+})
 ```
 
 ## Rules

@@ -1,18 +1,18 @@
-import tsParser from "@typescript-eslint/parser";
-import { RuleTester } from "@typescript-eslint/rule-tester";
-import { resolve } from "path";
+import tsParser from '@typescript-eslint/parser'
+import { RuleTester } from '@typescript-eslint/rule-tester'
+import { resolve } from 'path'
 
-import { MessageIds, mustUseResult } from "../../src/rules/must-use-result";
+import { MessageIds, mustUseResult } from '../../src/rules/must-use-result'
 
 const ruleTester = new RuleTester({
   languageOptions: {
     parser: tsParser,
     parserOptions: {
-      project: "./tsconfig.json",
-      tsconfigRootDir: resolve(__dirname, "..", "./fixtures"),
+      project: './tsconfig.json',
+      tsconfigRootDir: resolve(__dirname, '..', './fixtures'),
     },
   },
-});
+})
 
 function injectResult(name: string, text: string) {
   return (
@@ -83,13 +83,13 @@ declare function getNormal(): number
 const obj: { get: () => Result<string, Error> }
 
 ` + text
-  );
+  )
 }
 
-ruleTester.run("must-use-result", mustUseResult, {
+ruleTester.run('must-use-result', mustUseResult, {
   valid: [
     injectResult(
-      "call unwrapOr",
+      'call unwrapOr',
       `
       const result = getResult()
 
@@ -97,7 +97,7 @@ ruleTester.run("must-use-result", mustUseResult, {
     `,
     ),
     injectResult(
-      "call unwrapOr after some methods",
+      'call unwrapOr after some methods',
       `
       const result = getResult()
 
@@ -105,14 +105,14 @@ ruleTester.run("must-use-result", mustUseResult, {
     `,
     ),
     injectResult(
-      "Call match",
+      'Call match',
       `
       const result = getResult()
       result.match(() => {}, () => {})
     `,
     ),
     injectResult(
-      "Return result from function",
+      'Return result from function',
       `
       function main() {
         return getResult().map(() => {})
@@ -120,13 +120,13 @@ ruleTester.run("must-use-result", mustUseResult, {
     `,
     ),
     injectResult(
-      "Return result from an arrow function",
+      'Return result from an arrow function',
       `
       const main = () => getResult().map(() => {})
     `,
     ),
     injectResult(
-      "Call a normal function",
+      'Call a normal function',
       `
       getNormal()
     `,
@@ -138,7 +138,7 @@ ruleTester.run("must-use-result", mustUseResult, {
   invalid: [
     {
       code: injectResult(
-        "only assignment",
+        'only assignment',
         `
         const result = getResult()
       `,
@@ -147,20 +147,17 @@ ruleTester.run("must-use-result", mustUseResult, {
     },
     {
       code: injectResult(
-        "Call map for result",
+        'Call map for result',
         `
         const result = getResult();
         result.map(() => {})
       `,
       ),
-      errors: [
-        { messageId: MessageIds.MUST_USE },
-        { messageId: MessageIds.MUST_USE },
-      ],
+      errors: [{ messageId: MessageIds.MUST_USE }, { messageId: MessageIds.MUST_USE }],
     },
     {
       code: injectResult(
-        "only call",
+        'only call',
         `
         getResult()
       `,
@@ -169,7 +166,7 @@ ruleTester.run("must-use-result", mustUseResult, {
     },
     {
       code: injectResult(
-        "call external function",
+        'call external function',
         `
         const v = getResult()
         externaFunction(v)
@@ -179,7 +176,7 @@ ruleTester.run("must-use-result", mustUseResult, {
     },
     {
       code: injectResult(
-        "made call from object",
+        'made call from object',
         `
         obj.get()
       `,
@@ -188,7 +185,7 @@ ruleTester.run("must-use-result", mustUseResult, {
     },
     {
       code: injectResult(
-        "none of the handle methods is called",
+        'none of the handle methods is called',
         `
         getResult().unwrapOr
       `,
@@ -197,17 +194,14 @@ ruleTester.run("must-use-result", mustUseResult, {
     },
     {
       code: injectResult(
-        "called inside a function",
+        'called inside a function',
         `
         function main() {
           getResult().map(() => {})
         }
       `,
       ),
-      errors: [
-        { messageId: MessageIds.MUST_USE },
-        { messageId: MessageIds.MUST_USE },
-      ],
+      errors: [{ messageId: MessageIds.MUST_USE }, { messageId: MessageIds.MUST_USE }],
     },
   ],
-});
+})
