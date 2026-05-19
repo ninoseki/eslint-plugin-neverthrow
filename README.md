@@ -38,4 +38,4 @@ export default defineConfig(
 
 ## Rules
 
-Same as https://github.com/mdbetancourt/eslint-plugin-neverthrow/tree/master?tab=readme-ov-file#rules.
+Same as https://github.com/mdbetancourt/eslint-plugin-neverthrow/tree/master#rules
