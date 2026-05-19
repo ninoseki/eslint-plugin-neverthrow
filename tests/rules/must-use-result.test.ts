@@ -80,6 +80,9 @@ declare class Err<T, E> implements IResult<T, E> {
 
 declare function getResult(): Result<string, Error>
 declare function getNormal(): number
+declare function safeTry<T, E>(
+  body: () => Generator<Err<never, E>, Result<T, E>>,
+): Result<T, E>
 const obj: { get: () => Result<string, Error> }
 
 ` + text
@@ -158,6 +161,19 @@ ruleTester.run('must-use-result', mustUseResult, {
       const result = getResult()
       if (!result.isErr()) {
         return ok()
+      }
+      `,
+    ),
+    injectResult(
+      'safeTry with yield* propagates Result errors',
+      `
+      declare const mightError: () => Result<number, string>
+
+      function consume2(): Result<number, string> {
+        return safeTry(function*() {
+          const value = yield* mightError()
+          return ok(value)
+        })
       }
       `,
     ),
@@ -254,6 +270,38 @@ ruleTester.run('must-use-result', mustUseResult, {
         const res = getResult();
         if (res.isOk) {
           return ok()
+        }
+        `,
+      ),
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      code: injectResult(
+        'safeTry without yield* should still be handled explicitly',
+        `
+        declare const mightError: () => Result<number, string>
+
+        function consume2(): Result<number, string> {
+          return safeTry(function*() {
+            mightError()
+            return ok(1)
+          })
+        }
+        `,
+      ),
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      code: injectResult(
+        'safeTry with yield (not yield*) should still be handled explicitly',
+        `
+        declare const mightError: () => Result<number, string>
+
+        function consume2(): Result<number, string> {
+          return safeTry(function*() {
+            yield mightError()
+            return ok(1)
+          })
         }
         `,
       ),
