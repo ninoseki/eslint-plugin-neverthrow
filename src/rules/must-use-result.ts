@@ -15,11 +15,14 @@ const resultSelector = matchAny([
   // 'Identifier',
   'CallExpression',
   'NewExpression',
+  'AwaitExpression',
 ])
 
 const resultProperties = ['mapErr', 'map', 'andThen', 'orElse', 'match', 'unwrapOr']
 
 const handledMethods = ['match', 'unwrapOr', '_unsafeUnwrap']
+
+const checkedMethods = ['isOk', 'isErr']
 
 function isResultLike(
   checker: TypeChecker,
@@ -51,6 +54,10 @@ function isMemberCalledFn(node?: TSESTree.MemberExpression): boolean {
 }
 
 function isHandledResult(node: TSESTree.Node): boolean {
+  if (node.type === 'AwaitExpression') {
+    return isHandledResult(node.argument)
+  }
+
   const memberExpression = node.parent
   if (memberExpression?.type === 'MemberExpression') {
     const methodName = findMemberName(memberExpression)
@@ -62,6 +69,16 @@ function isHandledResult(node: TSESTree.Node): boolean {
     if (parent && parent?.type !== 'ExpressionStatement') {
       return isHandledResult(parent)
     }
+  }
+  return false
+}
+
+function isCheckedResult(node: TSESTree.Node): boolean {
+  if (node.type === 'Identifier' && node.parent?.type === 'MemberExpression') {
+    const propertyName =
+      node.parent.property.type === 'Identifier' ? node.parent.property.name : null
+    const parentIsCalledExpression = node.parent.parent?.type === 'CallExpression'
+    return !!propertyName && checkedMethods.includes(propertyName) && parentIsCalledExpression
   }
   return false
 }
@@ -99,6 +116,12 @@ function isReturned(node: TSESTree.Node): boolean {
   if (node.type === 'Program') {
     return false
   }
+  if (node.type === 'AwaitExpression') {
+    if (!node.parent) {
+      return false
+    }
+    return isReturned(node.parent)
+  }
   if (!node.parent) {
     return false
   }
@@ -112,12 +135,37 @@ const ignoreParents = [
   'ClassProperty',
 ]
 
+function handleAssignation(
+  context: TSESLint.RuleContext<MessageIds, []>,
+  checker: TypeChecker,
+  parserServices: ParserServicesWithTypeInformation,
+  node: TSESTree.Node,
+  reportAs: TSESTree.Node = node,
+): boolean {
+  const assignedTo = getAssignation(checker, parserServices, node)
+  const currentScope = context.sourceCode.getScope(node)
+
+  if (assignedTo) {
+    const variable = currentScope.set.get(assignedTo.name)
+    const references = variable?.references.filter((ref) => ref.identifier !== assignedTo) ?? []
+
+    reportAs = variable?.references[0]?.identifier ?? reportAs
+
+    return references.some(
+      (ref) => !processSelector(context, checker, parserServices, ref.identifier, reportAs, true),
+    )
+  }
+
+  return false
+}
+
 function processSelector(
   context: TSESLint.RuleContext<MessageIds, []>,
   checker: TypeChecker,
   parserServices: ParserServicesWithTypeInformation,
   node: TSESTree.Node,
   reportAs = node,
+  isReferenceNode = false,
 ): boolean {
   if (node.parent?.type.startsWith('TS')) {
     return false
@@ -125,36 +173,45 @@ function processSelector(
   if (node.parent && ignoreParents.includes(node.parent.type)) {
     return false
   }
-  if (!isResultLike(checker, parserServices, node)) {
+
+  if (node.type === 'AwaitExpression') {
+    if (!isResultLike(checker, parserServices, node.argument)) {
+      return false
+    }
+  } else {
+    if (!isResultLike(checker, parserServices, node)) {
+      return false
+    }
+  }
+
+  // skip CallExpression inside an AwaitExpression to avoid duplicate reports
+  if (node.type === 'CallExpression' && node.parent?.type === 'AwaitExpression') {
     return false
   }
 
   if (isHandledResult(node)) {
     return false
   }
-  // return getResult()
+
+  if (isCheckedResult(node)) {
+    return false
+  }
+
   if (isReturned(node)) {
     return false
   }
 
-  const assignedTo = getAssignation(checker, parserServices, node)
-  const currentScope = context.sourceCode.getScope(node)
-
-  // Check if is assigned
-  if (assignedTo) {
-    const variable = currentScope.set.get(assignedTo.name)
-    const references = variable?.references.filter((ref) => ref.identifier !== assignedTo) ?? []
-    if (references.length > 0) {
-      return references.some((ref) =>
-        processSelector(context, checker, parserServices, ref.identifier, reportAs),
-      )
-    }
+  const anyHandled = handleAssignation(context, checker, parserServices, node, reportAs)
+  if (anyHandled) {
+    return false
   }
 
-  context.report({
-    node: reportAs,
-    messageId: MessageIds.MUST_USE,
-  })
+  if (!isReferenceNode) {
+    context.report({
+      node: reportAs,
+      messageId: MessageIds.MUST_USE,
+    })
+  }
   return true
 }
 
