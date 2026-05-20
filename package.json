@@ -27,6 +27,7 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "oxfmt src/ tests/",
+    "generate:fixtures": "node scripts/generate-fixtures.mjs",
     "test": "vitest",
     "prepack": "npm run build",
     "prepare": "husky"
