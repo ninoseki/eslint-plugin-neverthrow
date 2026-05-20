@@ -6,5 +6,6 @@
   },
   "categories": {
     "correctness": "error"
-  }
+  },
+  "ignorePatterns": ["tests/fixtures/neverthrow.d.ts"]
 }

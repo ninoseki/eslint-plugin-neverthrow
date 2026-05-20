@@ -54,10 +54,6 @@ function isMemberCalledFn(node?: TSESTree.MemberExpression): boolean {
 }
 
 function isHandledResult(node: TSESTree.Node): boolean {
-  if (node.type === 'AwaitExpression') {
-    return isHandledResult(node.argument)
-  }
-
   const memberExpression = node.parent
   if (memberExpression?.type === 'MemberExpression') {
     const methodName = findMemberName(memberExpression)
@@ -70,6 +66,9 @@ function isHandledResult(node: TSESTree.Node): boolean {
       return isHandledResult(parent)
     }
   }
+  if (node.type === 'AwaitExpression') {
+    return isHandledResult(node.argument)
+  }
   return false
 }
 
@@ -81,6 +80,20 @@ function isCheckedResult(node: TSESTree.Node): boolean {
     return !!propertyName && checkedMethods.includes(propertyName) && parentIsCalledExpression
   }
   return false
+}
+
+function getEnclosingResultCall(
+  checker: TypeChecker,
+  parserServices: ParserServicesWithTypeInformation,
+  node: TSESTree.Node,
+): TSESTree.CallExpression | null {
+  const array = node.parent
+  if (array?.type !== 'ArrayExpression') return null
+  if (!array.elements.includes(node as TSESTree.Expression)) return null
+  const call = array.parent
+  if (call?.type !== 'CallExpression' || !call.arguments.includes(array)) return null
+  if (!isResultLike(checker, parserServices, call)) return null
+  return call
 }
 
 const endTransverse = ['BlockStatement', 'Program']
@@ -198,6 +211,11 @@ function processSelector(
   }
 
   if (isReturned(node)) {
+    return false
+  }
+
+  // delegate to a wrapping Result-returning call (e.g. combine([...]))
+  if (getEnclosingResultCall(checker, parserServices, node)) {
     return false
   }
 
