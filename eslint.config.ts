@@ -20,7 +20,13 @@ export default defineConfig(
     files: ['**/*.{ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/docs/**']),
+  globalIgnores([
+    '**/dist/**',
+    '**/dist-ssr/**',
+    '**/coverage/**',
+    '**/docs/**',
+    'tests/fixtures/neverthrow.d.ts',
+  ]),
 
   tseslint.configs.recommended,
 

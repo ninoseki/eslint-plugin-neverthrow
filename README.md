@@ -38,4 +38,8 @@ export default defineConfig(
 
 ## Rules
 
-Same as https://github.com/mdbetancourt/eslint-plugin-neverthrow/tree/master#rules
+### Possible Errors
+
+| Rule ID                                                       | Description                                                                                |     |
+| :------------------------------------------------------------ | :----------------------------------------------------------------------------------------- | :-: |
+| [neverthrow/must-use-result](./docs/rules/must-use-result.md) | Not handling neverthrow result is a possible error because errors could remain unhandled. | ⭐️ |
