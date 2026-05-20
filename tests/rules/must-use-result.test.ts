@@ -79,6 +79,17 @@ ruleTester.run('must-use-result', mustUseResult, {
     const asyncRes2 = getResultAsync()
     ResultAsync.combine([asyncRes1, asyncRes2]).match(() => {}, () => {})
     `,
+    // safeTry with yield* propagates Result errors
+    `
+    declare const mightError: () => Result<number, string>
+
+    function consume(): Result<number, string> {
+      return safeTry(function*() {
+        const value = yield* mightError()
+        return ok(value)
+      })
+    }
+    `,
   ],
   invalid: [
     {
@@ -172,6 +183,34 @@ ruleTester.run('must-use-result', mustUseResult, {
       const asyncRes1 = getResultAsync()
       const asyncRes2 = getResultAsync()
       ResultAsync.combine([asyncRes1, asyncRes2])
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // safeTry without yield* should still be handled explicitly
+      code: `
+      declare const mightError: () => Result<number, string>
+
+      function consume(): Result<number, string> {
+        return safeTry(function*() {
+          mightError()
+          return ok(1)
+        })
+      }
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // safeTry with yield (not yield*) should still be handled explicitly
+      code: `
+      declare const mightError: () => Result<number, string>
+
+      function consume(): Result<number, string> {
+        return safeTry(function*() {
+          yield mightError()
+          return ok(1)
+        })
+      }
       `,
       errors: [{ messageId: MessageIds.MUST_USE }],
     },

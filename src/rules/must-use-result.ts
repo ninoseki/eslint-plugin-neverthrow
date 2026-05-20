@@ -53,6 +53,58 @@ function isMemberCalledFn(node?: TSESTree.MemberExpression): boolean {
   return node.parent.callee === node
 }
 
+function isSafeTryCallee(callee: TSESTree.Expression): boolean {
+  if (callee.type === 'Identifier') {
+    return callee.name === 'safeTry'
+  }
+
+  if (callee.type === 'MemberExpression' && callee.property.type === 'Identifier') {
+    return callee.property.name === 'safeTry'
+  }
+
+  return false
+}
+
+function isInsideSafeTryYield(node: TSESTree.Node): boolean {
+  let current: TSESTree.Node | undefined = node
+  let foundYieldDelegate = false
+
+  while (current?.parent) {
+    const parent: TSESTree.Node = current.parent
+
+    if (parent.type === 'YieldExpression' && parent.argument === current) {
+      if (!parent.delegate) {
+        return false
+      }
+      foundYieldDelegate = true
+    }
+
+    if (
+      foundYieldDelegate &&
+      (parent.type === 'FunctionExpression' || parent.type === 'ArrowFunctionExpression')
+    ) {
+      const callExpression = parent.parent
+      if (!callExpression || callExpression.type !== 'CallExpression') {
+        return false
+      }
+
+      if (!callExpression.arguments.includes(parent)) {
+        return false
+      }
+
+      return isSafeTryCallee(callExpression.callee)
+    }
+
+    if (parent.type === 'Program') {
+      return false
+    }
+
+    current = parent
+  }
+
+  return false
+}
+
 function isHandledResult(node: TSESTree.Node): boolean {
   const memberExpression = node.parent
   if (memberExpression?.type === 'MemberExpression') {
@@ -203,6 +255,10 @@ function processSelector(
   }
 
   if (isHandledResult(node)) {
+    return false
+  }
+
+  if (isInsideSafeTryYield(node)) {
     return false
   }
 
