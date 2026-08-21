@@ -10,7 +10,7 @@ This rule disallows `Result` values that are not handled. A `Result` is consider
 - It is guard-checked with `isOk()` or `isErr()` (the methods must be called, not just referenced).
 - It is returned from a function (including arrow-function shorthand and via `await`).
 - It is passed as an array element to a wrapping call whose own return type is a `Result` — e.g. `combine([...])`, `combineWithAllErrors([...])`, `Result.combine([...])`. In that case the handle obligation transfers to the wrapping call.
-- `await` on a `Result` / `ResultAsync` is treated transparently — `await getResult()` participates in the same handling checks as `getResult()`.
+- `await` is treated transparently — `await getResult()` participates in the same handling checks as `getResult()`. This covers `ResultAsync` as well as a plain `Promise<Result>`, e.g. an `async function` declared to return `Promise<Result<T, E>>`.
 - It is propagated with `yield*` inside a generator passed to `safeTry(...)`. `yield*` rethrows the `Err` to the surrounding `safeTry`, so the result is considered handled. Note that plain `yield` (without `*`) and an un-yielded call inside the generator are **not** treated as handled — they don't propagate errors.
 
 Below shows an incorrect snippet and the corresponding way to make the same code valid.

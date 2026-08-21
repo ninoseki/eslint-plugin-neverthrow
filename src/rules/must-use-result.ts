@@ -239,14 +239,8 @@ function processSelector(
     return false
   }
 
-  if (node.type === 'AwaitExpression') {
-    if (!isResultLike(checker, parserServices, node.argument)) {
-      return false
-    }
-  } else {
-    if (!isResultLike(checker, parserServices, node)) {
-      return false
-    }
+  if (!isResultLike(checker, parserServices, node)) {
+    return false
   }
 
   // skip CallExpression inside an AwaitExpression to avoid duplicate reports

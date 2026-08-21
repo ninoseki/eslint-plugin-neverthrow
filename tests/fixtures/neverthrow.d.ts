@@ -567,5 +567,6 @@ declare type CombineResultsWithAllErrorsArray<T extends readonly Result<unknown,
 // --- test-only helpers ---
 declare function getResult(): Result<string, Error>
 declare function getResultAsync(): ResultAsync<string, Error>
+declare function getPromiseResult(): Promise<Result<string, Error>>
 declare function getNormal(): number
 declare const obj: { get: () => Result<string, Error> }
