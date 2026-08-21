@@ -52,6 +52,18 @@ ruleTester.run('must-use-result', mustUseResult, {
     const res2 = await getResultAsync();
     res2.unwrapOr(5);
     `,
+    // Await Promise<Result> handled properly
+    `
+    (await getPromiseResult()).unwrapOr(5);
+    const res3 = await getPromiseResult();
+    res3.unwrapOr(5);
+    `,
+    // Return an awaited Promise<Result>
+    `
+    async function main() {
+      return await getPromiseResult()
+    }
+    `,
     // Call isOk
     `
     const result = getResult()
@@ -153,6 +165,21 @@ ruleTester.run('must-use-result', mustUseResult, {
       res1.unwrapOr;
 
       await getResultAsync();
+      `,
+      errors: [
+        { messageId: MessageIds.MUST_USE },
+        { messageId: MessageIds.MUST_USE },
+        { messageId: MessageIds.MUST_USE },
+      ],
+    },
+    {
+      // Await Promise<Result> is not handled properly
+      code: `
+      const res = await getPromiseResult();
+      const res1 = await getPromiseResult();
+      res1.unwrapOr;
+
+      await getPromiseResult();
       `,
       errors: [
         { messageId: MessageIds.MUST_USE },
