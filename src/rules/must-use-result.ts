@@ -1,8 +1,10 @@
 import { TSESTree } from '@typescript-eslint/types'
 import type { TSESLint } from '@typescript-eslint/utils'
 import { ESLintUtils, type ParserServicesWithTypeInformation } from '@typescript-eslint/utils'
-import { unionTypeParts } from 'tsutils'
-import { TypeChecker } from 'typescript'
+import { unionConstituents } from 'ts-api-utils'
+import type { TypeChecker } from 'typescript'
+
+import { createRule } from '../utils'
 
 export enum MessageIds {
   MUST_USE = 'mustUseResult',
@@ -33,7 +35,7 @@ function isResultLike(
   const tsNodeMap = parserServices.esTreeNodeToTSNodeMap.get(node)
   const type = checker.getTypeAtLocation(tsNodeMap)
 
-  for (const ty of unionTypeParts(checker.getApparentType(type))) {
+  for (const ty of unionConstituents(checker.getApparentType(type))) {
     if (resultProperties.map((p) => ty.getProperty(p)).every((p) => p !== undefined)) {
       return true
     }
@@ -283,11 +285,14 @@ function processSelector(
   return true
 }
 
-export const mustUseResult = ESLintUtils.RuleCreator.withoutDocs({
+export const mustUseResult = createRule({
+  name: 'must-use-result',
   meta: {
     docs: {
       description:
-        'Not handling neverthrow result is a possible error because errors could remain unhandleds.',
+        'Not handling neverthrow result is a possible error because errors could remain unhandled.',
+      recommended: true,
+      requiresTypeChecking: true,
     },
     messages: {
       mustUseResult: 'Result must be handled with either of match, unwrapOr or _unsafeUnwrap.',
