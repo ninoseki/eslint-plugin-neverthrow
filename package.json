@@ -1,9 +1,11 @@
 {
   "name": "@ninoseki/eslint-plugin-neverthrow",
   "version": "0.0.0",
+  "description": "ESLint plugin for neverthrow",
   "keywords": [
     "eslint",
     "eslint-plugin",
+    "eslintplugin",
     "neverthrow"
   ],
   "homepage": "https://github.com/ninoseki/eslint-plugin-neverthrow",
@@ -37,27 +39,26 @@
   "devDependencies": {
     "@types/node": "^24.12.0",
     "@typescript-eslint/rule-tester": "^8.67.0",
-    "@vitest/eslint-plugin": "^1.6.17",
-    "eslint": "^10.4.0",
+    "@vitest/eslint-plugin": "^1.6.27",
+    "eslint": "^10.9.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-eslint-plugin": "^7.6.2",
-    "eslint-plugin-oxlint": "^1.65.0",
-    "eslint-plugin-regexp": "^3.1.0",
-    "eslint-plugin-simple-import-sort": "^13.0.0",
+    "eslint-plugin-oxlint": "^1.79.0",
+    "eslint-plugin-regexp": "^3.2.0",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
     "husky": "9.1.7",
     "jiti": "^2.7.0",
-    "lint-staged": "17.0.5",
+    "lint-staged": "17.3.0",
     "neverthrow": "^8.2.0",
-    "npm-run-all2": "^9.0.0",
-    "oxfmt": "^0.50.0",
-    "oxlint": "^1.65.0",
-    "publint": "^0.3.21",
+    "npm-run-all2": "^9.0.3",
+    "oxfmt": "^0.64.0",
+    "publint": "^0.3.24",
     "ts-api-utils": "^2.5.0",
-    "tsdown": "^0.22.0",
-    "tsx": "^4.22.2",
+    "tsdown": "^0.22.14",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.67.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "@typescript-eslint/parser": ">=8.0.0",
@@ -69,5 +70,8 @@
       "npx oxlint --fix",
       "npx oxfmt"
     ]
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
