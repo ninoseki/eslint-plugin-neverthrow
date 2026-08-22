@@ -1,6 +1,10 @@
-import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/types'
-import type { TSESLint } from '@typescript-eslint/utils'
-import { ESLintUtils, type ParserServicesWithTypeInformation } from '@typescript-eslint/utils'
+import {
+  AST_NODE_TYPES,
+  ESLintUtils,
+  type ParserServicesWithTypeInformation,
+  type TSESLint,
+  type TSESTree,
+} from '@typescript-eslint/utils'
 import { unionConstituents } from 'ts-api-utils'
 import type { TypeChecker } from 'typescript'
 
