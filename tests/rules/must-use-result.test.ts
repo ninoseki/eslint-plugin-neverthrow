@@ -102,6 +102,18 @@ ruleTester.run('must-use-result', mustUseResult, {
       })
     }
     `,
+    // class field initializers are excluded -- the rule can't follow `this.r`
+    // to its use sites, so reporting here would be a false positive
+    `
+    class A {
+      r = getResult()
+      static s = getResult()
+
+      m() {
+        return this.r.unwrapOr('')
+      }
+    }
+    `,
   ],
   invalid: [
     {
