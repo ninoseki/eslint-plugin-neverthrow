@@ -6,6 +6,6 @@ export default defineConfig([
     format: ['esm'],
     dts: true,
     clean: true,
-    deps: { neverBundle: ['typescript'] },
+    deps: { neverBundle: ['typescript', '@typescript-eslint/utils'] },
   },
 ])
