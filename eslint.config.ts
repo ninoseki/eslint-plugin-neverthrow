@@ -2,15 +2,11 @@ import pluginVitest from '@vitest/eslint-plugin'
 import { globalIgnores } from 'eslint/config'
 import { defineConfig } from 'eslint/config'
 import skipFormatting from 'eslint-config-prettier/flat'
+import pluginEslintPlugin from 'eslint-plugin-eslint-plugin'
 import pluginOxlint from 'eslint-plugin-oxlint'
 import * as regexpPlugin from 'eslint-plugin-regexp'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import tseslint from 'typescript-eslint'
-
-// To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
-// import { configureVueProject } from '@vue/eslint-config-typescript'
-// configureVueProject({ scriptLangs: ['ts', 'tsx'] })
-// More info at https://github.com/vuejs/eslint-config-typescript/#advanced-setup
 
 const mode = process.env.NODE_ENV === 'production' ? 'error' : 'warn'
 
@@ -20,19 +16,15 @@ export default defineConfig(
     files: ['**/*.{ts,mts,tsx}'],
   },
 
-  globalIgnores([
-    '**/dist/**',
-    '**/dist-ssr/**',
-    '**/coverage/**',
-    '**/docs/**',
-    'tests/fixtures/neverthrow.d.ts',
-  ]),
+  globalIgnores(['**/dist/**', '**/coverage/**', '**/docs/**', 'tests/fixtures/neverthrow.d.ts']),
 
   tseslint.configs.recommended,
 
+  pluginEslintPlugin.configs.recommended,
+
   {
     ...pluginVitest.configs.recommended,
-    files: ['src/**/__tests__/*'],
+    files: ['tests/**/*.{test,spec}.ts'],
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
