@@ -29,8 +29,10 @@
     "format": "oxfmt src/ tests/",
     "generate:fixtures": "node scripts/generate-fixtures.mjs",
     "test": "vitest",
-    "prepack": "npm run build",
     "prepare": "husky"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.67.0"
   },
   "devDependencies": {
     "@types/node": "^24.12.0",
@@ -67,8 +69,5 @@
       "npx oxlint --fix",
       "npx oxfmt"
     ]
-  },
-  "dependencies": {
-    "@typescript-eslint/utils": "^8.67.0"
   }
 }
