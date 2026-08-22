@@ -1,4 +1,4 @@
-import { TSESTree } from '@typescript-eslint/types'
+import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/types'
 import type { TSESLint } from '@typescript-eslint/utils'
 import { ESLintUtils, type ParserServicesWithTypeInformation } from '@typescript-eslint/utils'
 import { unionConstituents } from 'ts-api-utils'
@@ -10,14 +10,14 @@ export enum MessageIds {
   MUST_USE = 'mustUseResult',
 }
 
-function matchAny(nodeTypes: string[]) {
+function matchAny(nodeTypes: AST_NODE_TYPES[]) {
   return `:matches(${nodeTypes.join(', ')})`
 }
 const resultSelector = matchAny([
-  // 'Identifier',
-  'CallExpression',
-  'NewExpression',
-  'AwaitExpression',
+  // AST_NODE_TYPES.Identifier,
+  AST_NODE_TYPES.CallExpression,
+  AST_NODE_TYPES.NewExpression,
+  AST_NODE_TYPES.AwaitExpression,
 ])
 
 const resultProperties = ['mapErr', 'map', 'andThen', 'orElse', 'match', 'unwrapOr']
@@ -150,7 +150,7 @@ function getEnclosingResultCall(
   return call
 }
 
-const endTransverse = ['BlockStatement', 'Program']
+const endTransverse: AST_NODE_TYPES[] = [AST_NODE_TYPES.BlockStatement, AST_NODE_TYPES.Program]
 
 function getAssignation(
   checker: TypeChecker,
@@ -195,11 +195,17 @@ function isReturned(node: TSESTree.Node): boolean {
   return isReturned(node.parent)
 }
 
-const ignoreParents = [
-  'ClassDeclaration',
-  'FunctionDeclaration',
-  'MethodDefinition',
-  'ClassProperty',
+// a Result held in one of these can't be tracked to its use sites, so reporting
+// it would be a false positive whenever it is handled elsewhere (e.g. `this.r`).
+// These arrays are checked with `includes`, which -- unlike an `===` comparison
+// against a literal -- gets no compile-time checking from a plain `string[]`.
+// Spelling them with the enum is what makes a future AST rename fail the build,
+// as `ClassProperty` silently did not after its typescript-eslint v5 rename.
+const ignoreParents: AST_NODE_TYPES[] = [
+  AST_NODE_TYPES.ClassDeclaration,
+  AST_NODE_TYPES.FunctionDeclaration,
+  AST_NODE_TYPES.MethodDefinition,
+  AST_NODE_TYPES.PropertyDefinition,
 ]
 
 function handleAssignation(
