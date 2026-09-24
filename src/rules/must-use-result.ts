@@ -26,7 +26,7 @@ const resultSelector = matchAny([
 
 const resultProperties = ['mapErr', 'map', 'andThen', 'orElse', 'match', 'unwrapOr']
 
-const handledMethods = ['match', 'unwrapOr', '_unsafeUnwrap']
+const handledMethods = ['match', 'unwrapOr', '_unsafeUnwrap', '_unsafeUnwrapErr']
 
 const checkedMethods = ['isOk', 'isErr']
 
@@ -305,7 +305,8 @@ export const mustUseResult = createRule({
       requiresTypeChecking: true,
     },
     messages: {
-      mustUseResult: 'Result must be handled with either of match, unwrapOr or _unsafeUnwrap.',
+      mustUseResult:
+        'Result must be handled with either of match, unwrapOr, _unsafeUnwrap or _unsafeUnwrapErr.',
     },
     schema: [],
     type: 'problem',

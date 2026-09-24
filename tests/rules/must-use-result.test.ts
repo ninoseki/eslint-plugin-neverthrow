@@ -74,6 +74,11 @@ ruleTester.run('must-use-result', mustUseResult, {
     const result = getResult()
     if (!result.isErr()) {}
     `,
+    // Call _unsafeUnwrapErr
+    `
+    const result = getResult()
+    result._unsafeUnwrapErr()
+    `,
     // pass results into combine and handle the combined result
     `
     const result1 = getResult()
