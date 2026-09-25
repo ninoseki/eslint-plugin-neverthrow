@@ -29,7 +29,7 @@ export default defineConfig(...tseslint.configs.recommended, {
   },
   languageOptions: {
     parserOptions: {
-      project: './tsconfig.json',
+      projectService: true,
     },
   },
 })
