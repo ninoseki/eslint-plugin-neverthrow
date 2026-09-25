@@ -6,7 +6,7 @@
 
 This rule disallows `Result` values that are not handled. A `Result` is considered handled when one of the following is true:
 
-- It is terminated with `match`, `unwrapOr`, or `_unsafeUnwrap` (directly or after a chain of `map` / `mapErr` / `andThen` / `orElse`).
+- It is terminated with `match`, `unwrapOr`, `_unsafeUnwrap` or `_unsafeUnwrapErr` (directly or after a chain of `map` / `mapErr` / `andThen` / `orElse`).
 - It is guard-checked with `isOk()` or `isErr()` (the methods must be called, not just referenced).
 - It is returned from a function (including arrow-function shorthand and via `await`).
 - It is passed as an array element to a wrapping call whose own return type is a `Result` — e.g. `combine([...])`, `combineWithAllErrors([...])`, `Result.combine([...])`. In that case the handle obligation transfers to the wrapping call.
