@@ -12,7 +12,7 @@ This rule disallows `Result` values that are not handled. A `Result` is consider
 - It is passed as an array element to a wrapping call whose own return type is a `Result` — e.g. `combine([...])`, `combineWithAllErrors([...])`, `Result.combine([...])`. In that case the handle obligation transfers to the wrapping call.
 - `await` is treated transparently — `await getResult()` participates in the same handling checks as `getResult()`. This covers `ResultAsync` as well as a plain `Promise<Result>`, e.g. an `async function` declared to return `Promise<Result<T, E>>`.
 - It is a class field initializer (`class A { r = getResult() }`). These are excluded rather than handled: the rule cannot follow `this.r` to its use sites, so reporting them would be a false positive whenever the field is handled in a method.
-- It is propagated with `yield*` inside a generator passed to `safeTry(...)`. `yield*` rethrows the `Err` to the surrounding `safeTry`, so the result is considered handled. Note that plain `yield` (without `*`) and an un-yielded call inside the generator are **not** treated as handled — they don't propagate errors.
+- It is propagated with `yield*` inside a generator passed to `safeTry(...)`. `yield*` rethrows the `Err` to the surrounding `safeTry`, so the result is considered handled. The `safeTry` generator function may be wrapped with `.bind(...)` to fix its `this`. Note that plain `yield` (without `*`) and an un-yielded call inside the generator are **not** treated as handled — they don't propagate errors.
 
 Below shows an incorrect snippet and the corresponding way to make the same code valid.
 
@@ -138,6 +138,23 @@ function consume(): Result<number, string> {
     const value = yield* mightError()
     return ok(value)
   })
+}
+```
+
+Good - A `safeTry` generator needing a `this` may be bound:
+
+```ts
+class Service {
+  mightError(): Result<number, string> {
+    return ok(1)
+  }
+
+  consume(): Result<number, string> {
+    return safeTry(function* (this: Service) {
+      const value = yield* this.mightError()
+      return ok(value)
+    }.bind(this))
+  }
 }
 ```
 

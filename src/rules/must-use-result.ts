@@ -71,6 +71,21 @@ function isSafeTryCallee(callee: TSESTree.Expression): boolean {
   return false
 }
 
+function getBindCall(node: TSESTree.Node): TSESTree.CallExpression | null {
+  const member = node.parent
+  if (member?.type !== 'MemberExpression' || member.object !== node) return null
+  if (member.computed || member.property.type !== 'Identifier') return null
+  if (member.property.name !== 'bind') return null
+  const call = member.parent
+  if (call?.type !== 'CallExpression' || call.callee !== member) return null
+  return call
+}
+
+function unwrapBindChain(fn: TSESTree.Expression): TSESTree.Expression {
+  const bindCall = getBindCall(fn)
+  return bindCall ? unwrapBindChain(bindCall) : fn
+}
+
 function isInsideSafeTryYield(node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node
   let foundYieldDelegate = false
@@ -89,12 +104,16 @@ function isInsideSafeTryYield(node: TSESTree.Node): boolean {
       foundYieldDelegate &&
       (parent.type === 'FunctionExpression' || parent.type === 'ArrowFunctionExpression')
     ) {
-      const callExpression = parent.parent
+      // safeTry takes a function that returns a generator, so bodies that need `this`
+      // might be passed bound (e.g. `function* () {}.bind(this)`) -- the argument list
+      // node would then be the outermost bind, rather than the generator
+      const body = unwrapBindChain(parent)
+      const callExpression = body.parent
       if (!callExpression || callExpression.type !== 'CallExpression') {
         return false
       }
 
-      if (!callExpression.arguments.includes(parent)) {
+      if (!callExpression.arguments.includes(body)) {
         return false
       }
 

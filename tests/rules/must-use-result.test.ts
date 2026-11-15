@@ -107,6 +107,49 @@ ruleTester.run('must-use-result', mustUseResult, {
       })
     }
     `,
+    // safeTry with a `this`-typed generator bound via .bind(this)
+    `
+    class Service {
+      mightError(): Result<number, string> {
+        return ok(1)
+      }
+
+      consume(): Result<number, string> {
+        return safeTry(function* (this: Service) {
+          const value = yield* this.mightError()
+          return ok(value)
+        }.bind(this))
+      }
+    }
+    `,
+    // safeTry with a bound async generator
+    `
+    class Service {
+      mightError(): ResultAsync<number, string> {
+        return okAsync(1)
+      }
+
+      consume(): ResultAsync<number, string> {
+        return safeTry(async function* (this: Service) {
+          const value = yield* this.mightError()
+          return ok(value)
+        }.bind(this))
+      }
+    }
+    `,
+    // safeTry with a generator bound more than once
+    `
+    declare const mightError: () => Result<number, string>
+
+    class Service {
+      consume(): Result<number, string> {
+        return safeTry(function* (this: Service) {
+          const value = yield* mightError()
+          return ok(value)
+        }.bind(this).bind(this))
+      }
+    }
+    `,
     // class field initializers are excluded -- the rule can't follow `this.r`
     // to its use sites, so reporting here would be a false positive
     `
@@ -254,6 +297,56 @@ ruleTester.run('must-use-result', mustUseResult, {
           yield mightError()
           return ok(1)
         })
+      }
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // a bound generator passed to something other than safeTry is not exempt
+      code: `
+      declare const mightError: () => Result<number, string>
+      declare function notSafeTry(body: () => Generator<unknown, unknown>): void
+
+      class Service {
+        consume() {
+          notSafeTry(function* (this: Service) {
+            const value = yield* mightError()
+            return value
+          }.bind(this))
+        }
+      }
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // a repeatedly bound generator passed to something other than safeTry is not exempt
+      code: `
+      declare const mightError: () => Result<number, string>
+      declare function notSafeTry(body: () => Generator<unknown, unknown>): void
+
+      class Service {
+        consume() {
+          notSafeTry(function* (this: Service) {
+            const value = yield* mightError()
+            return value
+          }.bind(this).bind(this))
+        }
+      }
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // plain yield (not yield*) inside a bound safeTry body is still reported
+      code: `
+      declare const mightError: () => Result<number, string>
+
+      class Service {
+        consume(): Result<number, string> {
+          return safeTry(function* (this: Service) {
+            yield mightError()
+            return ok(1)
+          }.bind(this))
+        }
       }
       `,
       errors: [{ messageId: MessageIds.MUST_USE }],
