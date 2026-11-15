@@ -150,6 +150,46 @@ ruleTester.run('must-use-result', mustUseResult, {
       }
     }
     `,
+    // safeTry with a bound generator wrapped in a type assertion
+    `
+    declare const mightError: () => Result<number, string>
+
+    class Service {
+      consume(): Result<number, string> {
+        return safeTry(function* (this: Service) {
+          const value = yield* mightError()
+          return ok(value)
+        }.bind(this) as () => Generator<Err<never, string>, Result<number, string>>)
+      }
+    }
+    `,
+    // safeTry with a generator bound via computed member access
+    `
+    declare const mightError: () => Result<number, string>
+
+    class Service {
+      consume(): Result<number, string> {
+        return safeTry(function* (this: Service) {
+          const value = yield* mightError()
+          return ok(value)
+        }['bind'](this))
+      }
+    }
+    `,
+    // safeTry with a bound generator stored in a const first
+    `
+    declare const mightError: () => Result<number, string>
+
+    class Service {
+      consume(): Result<number, string> {
+        const body = function* (this: Service) {
+          const value = yield* mightError()
+          return ok(value)
+        }.bind(this)
+        return safeTry(body)
+      }
+    }
+    `,
     // class field initializers are excluded -- the rule can't follow `this.r`
     // to its use sites, so reporting here would be a false positive
     `
@@ -344,6 +384,61 @@ ruleTester.run('must-use-result', mustUseResult, {
         consume(): Result<number, string> {
           return safeTry(function* (this: Service) {
             yield mightError()
+            return ok(1)
+          }.bind(this))
+        }
+      }
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // a bound async generator passed to something other than safeTry is not exempt
+      code: `
+      declare const mightError: () => ResultAsync<number, string>
+      declare function notSafeTry(body: () => AsyncGenerator<unknown, unknown>): void
+
+      class Service {
+        consume() {
+          notSafeTry(async function* (this: Service) {
+            const value = yield* mightError()
+            return value
+          }.bind(this))
+        }
+      }
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // a Result discarded inside a callback within a yield* is not propagated
+      code: `
+      declare const mightError: () => Result<number, string>
+      declare function wrap(fn: () => Result<number, string>): Result<number, string>
+
+      function consume(): Result<number, string> {
+        return safeTry(function* () {
+          yield* wrap(() => {
+            mightError()
+            return ok(1)
+          })
+          return ok(1)
+        })
+      }
+      `,
+      errors: [{ messageId: MessageIds.MUST_USE }],
+    },
+    {
+      // same, inside a bound safeTry body
+      code: `
+      declare const mightError: () => Result<number, string>
+      declare function wrap(fn: () => Result<number, string>): Result<number, string>
+
+      class Service {
+        consume(): Result<number, string> {
+          return safeTry(function* (this: Service) {
+            yield* wrap(() => {
+              mightError()
+              return ok(1)
+            })
             return ok(1)
           }.bind(this))
         }

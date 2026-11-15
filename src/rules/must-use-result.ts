@@ -71,22 +71,90 @@ function isSafeTryCallee(callee: TSESTree.Expression): boolean {
   return false
 }
 
+// type-only and optional-chain wrappers don't change which value is passed along
+const transparentParents: AST_NODE_TYPES[] = [
+  AST_NODE_TYPES.ChainExpression,
+  AST_NODE_TYPES.TSAsExpression,
+  AST_NODE_TYPES.TSNonNullExpression,
+  AST_NODE_TYPES.TSSatisfiesExpression,
+  AST_NODE_TYPES.TSTypeAssertion,
+]
+
+function skipTransparentParents(node: TSESTree.Node): TSESTree.Node {
+  let current = node
+  while (current.parent && transparentParents.includes(current.parent.type)) {
+    current = current.parent
+  }
+  return current
+}
+
+function isBindMember(member: TSESTree.MemberExpression): boolean {
+  if (!member.computed) {
+    return member.property.type === 'Identifier' && member.property.name === 'bind'
+  }
+  return member.property.type === 'Literal' && member.property.value === 'bind'
+}
+
 function getBindCall(node: TSESTree.Node): TSESTree.CallExpression | null {
   const member = node.parent
   if (member?.type !== 'MemberExpression' || member.object !== node) return null
-  if (member.computed || member.property.type !== 'Identifier') return null
-  if (member.property.name !== 'bind') return null
+  if (!isBindMember(member)) return null
   const call = member.parent
   if (call?.type !== 'CallExpression' || call.callee !== member) return null
   return call
 }
 
-function unwrapBindChain(fn: TSESTree.Expression): TSESTree.Expression {
-  const bindCall = getBindCall(fn)
-  return bindCall ? unwrapBindChain(bindCall) : fn
+// safeTry takes a function that returns a generator, so bodies that need `this`
+// might be passed bound (e.g. `function* () {}.bind(this)`) -- the node actually
+// passed along is then the outermost bind, rather than the generator
+function unwrapBindChain(node: TSESTree.Node): TSESTree.Node {
+  let current = skipTransparentParents(node)
+  for (let call = getBindCall(current); call; call = getBindCall(current)) {
+    current = skipTransparentParents(call)
+  }
+  return current
 }
 
-function isInsideSafeTryYield(node: TSESTree.Node): boolean {
+function isSafeTryArgument(node: TSESTree.Node): boolean {
+  const call = node.parent
+  if (call?.type !== 'CallExpression') return false
+  return (
+    call.arguments.includes(node as TSESTree.CallExpressionArgument) && isSafeTryCallee(call.callee)
+  )
+}
+
+function isPassedToSafeTry(sourceCode: TSESLint.SourceCode, fn: TSESTree.Node): boolean {
+  const passed = unwrapBindChain(fn)
+  if (isSafeTryArgument(passed)) {
+    return true
+  }
+
+  // `const body = function* () {}.bind(this); safeTry(body)`
+  const declarator = passed.parent
+  if (
+    declarator?.type !== 'VariableDeclarator' ||
+    declarator.init !== passed ||
+    declarator.id.type !== 'Identifier' ||
+    declarator.parent.kind !== 'const'
+  ) {
+    return false
+  }
+  const id = declarator.id
+  const variable = sourceCode.getDeclaredVariables(declarator)[0]
+  return (
+    variable?.references.some(
+      (ref) => ref.identifier !== id && isSafeTryArgument(unwrapBindChain(ref.identifier)),
+    ) ?? false
+  )
+}
+
+const functionTypes: AST_NODE_TYPES[] = [
+  AST_NODE_TYPES.ArrowFunctionExpression,
+  AST_NODE_TYPES.FunctionDeclaration,
+  AST_NODE_TYPES.FunctionExpression,
+]
+
+function isInsideSafeTryYield(sourceCode: TSESLint.SourceCode, node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node
   let foundYieldDelegate = false
 
@@ -100,28 +168,15 @@ function isInsideSafeTryYield(node: TSESTree.Node): boolean {
       foundYieldDelegate = true
     }
 
-    if (
-      foundYieldDelegate &&
-      (parent.type === 'FunctionExpression' || parent.type === 'ArrowFunctionExpression')
-    ) {
-      // safeTry takes a function that returns a generator, so bodies that need `this`
-      // might be passed bound (e.g. `function* () {}.bind(this)`) -- the argument list
-      // node would then be the outermost bind, rather than the generator
-      const body = unwrapBindChain(parent)
-      const callExpression = body.parent
-      if (!callExpression || callExpression.type !== 'CallExpression') {
-        return false
-      }
-
-      if (!callExpression.arguments.includes(body)) {
-        return false
-      }
-
-      return isSafeTryCallee(callExpression.callee)
-    }
-
-    if (parent.type === 'Program') {
-      return false
+    // the `yield*` must belong to the nearest enclosing function -- a Result
+    // discarded inside a callback passed to a yielded call is not propagated
+    if (functionTypes.includes(parent.type)) {
+      return (
+        foundYieldDelegate &&
+        parent.type === AST_NODE_TYPES.FunctionExpression &&
+        parent.generator &&
+        isPassedToSafeTry(sourceCode, parent)
+      )
     }
 
     current = parent
@@ -283,7 +338,7 @@ function processSelector(
     return false
   }
 
-  if (isInsideSafeTryYield(node)) {
+  if (isInsideSafeTryYield(context.sourceCode, node)) {
     return false
   }
 
